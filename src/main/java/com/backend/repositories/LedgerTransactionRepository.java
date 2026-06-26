@@ -1,6 +1,6 @@
 package com.backend.repositories;
 
-import com.backend.modals.LedgerTransaction;
+import com.backend.modals.leadger.LedgerTransaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

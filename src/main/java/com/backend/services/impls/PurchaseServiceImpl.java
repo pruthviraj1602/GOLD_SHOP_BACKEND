@@ -3,6 +3,9 @@ package com.backend.services.impls;
 import com.backend.mappers.purchase.ProductMapper;
 import com.backend.mappers.purchase.PurchaseMapper;
 import com.backend.mappers.purchase.PurchaseProductsMapper;
+import com.backend.modals.leadger.Ledger;
+import com.backend.modals.leadger.LedgerTransaction;
+import com.backend.modals.TransactionType;
 import com.backend.modals.dto.response.PaginatedResponse;
 import com.backend.modals.purchase.Product;
 import com.backend.modals.purchase.Purchase;
@@ -11,8 +14,9 @@ import com.backend.modals.purchase.dto.ProductRequest;
 import com.backend.modals.purchase.dto.PurchaseProductRequest;
 import com.backend.modals.purchase.dto.PurchaseRequest;
 import com.backend.modals.supplier.Supplier;
+import com.backend.repositories.LedgerRepository;
+import com.backend.repositories.LedgerTransactionRepository;
 import com.backend.repositories.purchase.ProductRepository;
-import com.backend.repositories.purchase.PurchaseProductRepository;
 import com.backend.repositories.purchase.PurchaseRepository;
 import com.backend.repositories.supplier.SupplierRepository;
 import com.backend.services.PurchaseService;
@@ -20,8 +24,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
@@ -34,13 +37,16 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final SupplierRepository supplierRepository;
     private final PurchaseProductsMapper purchaseProductsMapper;
     private final ProductMapper productMapper;
-    private final PurchaseProductRepository purchaseProductRepository;
+    private final LedgerRepository ledgerRepository;
+    private final LedgerTransactionRepository ledgerTransactionRepository;
 
+    @Transactional
     @Override
     public Boolean createPurchase(PurchaseRequest request) {
         Purchase purchase = purchaseMapper.toEntity(request);
-        purchase.setSupplier(supplierRepository.findById(request.getSupplier().getId())
-                .orElseThrow(() -> new RuntimeException("Supplier not found")));
+        Supplier supplier = supplierRepository.findById(request.getSupplier().getId())
+                .orElseThrow(() -> new RuntimeException("Supplier not found"));
+        purchase.setSupplier(supplier);
 
         for (PurchaseProducts purchaseProduct : purchase.getPurchaseProducts()) {
 
@@ -57,17 +63,53 @@ public class PurchaseServiceImpl implements PurchaseService {
             if (product.getQuantity() == null)
                 product.setQuantity(0);
 
-
-            product.setQuantity(
-                    product.getQuantity() + purchaseProduct.getPurchaseQuantity()
-            );
+            product.setQuantity(product.getQuantity() + purchaseProduct.getPurchaseQuantity());
         }
 
-        purchaseRepository.save(purchase);
+        Purchase savedPurchase = purchaseRepository.save(purchase);
+
+        createOrUpdateTransactions(request, savedPurchase);
 
         return true;
     }
 
+    public void createOrUpdateTransactions(PurchaseRequest request, Purchase purchase) {
+        // Create or update ledger for the supplier
+        Supplier supplier = purchase.getSupplier();
+        Ledger ledger = ledgerRepository.findBySupplier(supplier)
+                .orElseGet(() -> {
+                    Ledger newLedger = new Ledger();
+                    newLedger.setSupplier(supplier);
+                    newLedger.setAccountCode("SUPPLIER_" + supplier.getId());
+                    newLedger.setAccountName(supplier.getName());
+                    newLedger.setTotalAmount(BigDecimal.ZERO);
+                    newLedger.setDebitAmount(BigDecimal.ZERO);
+                    newLedger.setCreditAmount(BigDecimal.ZERO);
+                    newLedger.setRemainingBalance(BigDecimal.ZERO);
+                    newLedger.setActive(true);
+                    return ledgerRepository.save(newLedger);
+                });
+
+        // Update ledger amounts
+        ledger.setTotalAmount(ledger.getTotalAmount().add(request.getTotal()));
+        ledger.setDebitAmount(ledger.getDebitAmount().add(request.getPaidAmount()));
+        ledger.setRemainingBalance(ledger.getRemainingBalance().add(request.getDueAmount()));
+        ledgerRepository.save(ledger);
+
+        if (request.getPaidAmount().compareTo(BigDecimal.ZERO) > 0) {
+            // Create a new ledger transaction for the paid amount
+            LedgerTransaction transaction = new LedgerTransaction();
+            transaction.setLedger(ledger);
+            transaction.setTransactionDate(purchase.getDate());
+            transaction.setReferenceNo(purchase.getInvoiceNumber());
+            transaction.setTransactionType(TransactionType.PURCHASE);
+            transaction.setDebitAmount(request.getPaidAmount());
+            transaction.setCreditAmount(BigDecimal.ZERO);
+            transaction.setBalanceAfterTransaction(ledger.getTotalAmount());
+            transaction.setRemarks("Purchase payment for invoice: " + purchase.getInvoiceNumber());
+            ledgerTransactionRepository.save(transaction);
+        }
+    }
 
     @Transactional
     @Override

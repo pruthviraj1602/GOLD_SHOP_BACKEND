@@ -23,6 +23,10 @@ public class PurchaseRequest {
 
     private BigDecimal total;
 
+    private  BigDecimal paidAmount;
+
+    private BigDecimal dueAmount;
+
     private List<PurchaseProductRequest> purchaseProducts;
 
     private SupplierRequest supplier;

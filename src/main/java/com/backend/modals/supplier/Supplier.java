@@ -1,7 +1,7 @@
 package com.backend.modals.supplier;
 
 import com.backend.modals.BaseAuditableEntity;
-import com.backend.modals.Ledger;
+import com.backend.modals.leadger.Ledger;
 import com.backend.modals.purchase.Purchase;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;

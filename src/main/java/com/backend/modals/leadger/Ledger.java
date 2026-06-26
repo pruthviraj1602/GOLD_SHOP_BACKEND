@@ -1,5 +1,6 @@
-package com.backend.modals;
+package com.backend.modals.leadger;
 
+import com.backend.modals.BaseAuditableEntity;
 import com.backend.modals.supplier.Supplier;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -18,7 +19,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public class Ledger extends BaseAuditableEntity{
+public class Ledger extends BaseAuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -28,9 +29,13 @@ public class Ledger extends BaseAuditableEntity{
 
     private String accountName;
 
-    private BigDecimal openingBalance;
+    private BigDecimal totalAmount;
 
-    private BigDecimal currentBalance;
+    private BigDecimal debitAmount;
+
+    private BigDecimal creditAmount;
+
+    private BigDecimal remainingBalance;
 
     private Boolean active;
 

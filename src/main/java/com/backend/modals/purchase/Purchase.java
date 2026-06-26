@@ -36,6 +36,10 @@ public class Purchase {
 
     private BigDecimal total;
 
+    private  BigDecimal paidAmount;
+
+    private BigDecimal dueAmount;
+
 
     @ManyToOne
     @JoinColumn(name = "supplier_id")

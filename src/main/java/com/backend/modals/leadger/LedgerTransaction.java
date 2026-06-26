@@ -1,5 +1,7 @@
-package com.backend.modals;
+package com.backend.modals.leadger;
 
+import com.backend.modals.BaseAuditableEntity;
+import com.backend.modals.TransactionType;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
@@ -9,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.UUID;
 
 @Setter
@@ -23,7 +26,7 @@ public class LedgerTransaction extends BaseAuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String transactionDate;
+    private Date transactionDate;
 
     private String referenceNo;
 
