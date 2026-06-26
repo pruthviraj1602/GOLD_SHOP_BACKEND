@@ -1,5 +1,6 @@
 package com.backend.modals.dto.request;
 
+import com.backend.modals.leadger.dto.LedgerResponse;
 import lombok.Data;
 
 import java.util.UUID;
@@ -30,4 +31,6 @@ public class SupplierRequest {
     private SupplierBankDetailsRequest bankDetails;
 
     private SupplierContactDetailsRequest contactDetails;
+
+    private LedgerResponse ledger;
 }

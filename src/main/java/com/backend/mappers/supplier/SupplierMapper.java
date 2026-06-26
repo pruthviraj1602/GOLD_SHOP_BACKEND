@@ -1,5 +1,6 @@
 package com.backend.mappers.supplier;
 
+import com.backend.mappers.ledger.LedgerMapper;
 import com.backend.modals.supplier.Supplier;
 import com.backend.modals.dto.request.SupplierRequest;
 import org.mapstruct.AfterMapping;
@@ -12,7 +13,8 @@ import org.mapstruct.MappingTarget;
         uses = {
                 SupplierBankDetailsMapper.class,
                 SupplierContactDetailsMapper.class,
-                SupplierGstInformationMapper.class
+                SupplierGstInformationMapper.class,
+                LedgerMapper.class
         }
 )
 public interface SupplierMapper {
@@ -22,6 +24,7 @@ public interface SupplierMapper {
     @Mapping(source = "gstInformation", target = "supplierGstInformation")
     Supplier toEntity(SupplierRequest request);
 
+    @Mapping(source = "ledger", target = "ledger")
     @Mapping(source = "supplierBankDetails", target = "bankDetails")
     @Mapping(source = "supplierContactDetails", target = "contactDetails")
     @Mapping(source = "supplierGstInformation", target = "gstInformation")
