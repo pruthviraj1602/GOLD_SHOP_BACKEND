@@ -41,4 +41,9 @@ public class SupplierController {
     public ResponseEntity<Boolean> deleteSupplier(@RequestParam UUID id) {
         return supplierService.deleteSupplier(id) ? ResponseEntity.ok(true) : ResponseEntity.badRequest().body(false);
     }
+
+    @PostMapping("/search")
+    public ResponseEntity<?> searchSuppliers(@RequestParam String keyword) {
+        return ResponseEntity.ok(supplierService.searchSuppliers(keyword));
+    }
 }

@@ -14,4 +14,6 @@ public interface PurchaseService {
     PurchaseRequest getPurchaseById(UUID purchaseId);
 
     PaginatedResponse<PurchaseRequest> getAll(int page , int size);
+
+    PaginatedResponse<PurchaseRequest> getAllBySupplierId(UUID supplierId, int page , int size);
 }

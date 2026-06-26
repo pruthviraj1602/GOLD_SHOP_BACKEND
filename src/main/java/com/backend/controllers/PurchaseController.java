@@ -38,4 +38,9 @@ public class PurchaseController {
     public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
         return ResponseEntity.ok(purchaseService.getAll(page, size));
     }
+
+    @GetMapping("/get-by-supplier")
+    public ResponseEntity<?> getAllBySupplierId(@RequestParam UUID supplierId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
+        return ResponseEntity.ok(purchaseService.getAllBySupplierId(supplierId, page, size));
+    }
 }

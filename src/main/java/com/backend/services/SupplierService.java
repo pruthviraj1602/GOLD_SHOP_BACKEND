@@ -3,13 +3,12 @@ package com.backend.services;
 import com.backend.modals.dto.request.SupplierRequest;
 import com.backend.modals.dto.response.PaginatedResponse;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface SupplierService {
 
-
     Boolean createSupplier(SupplierRequest supplierRequest);
-
 
     Boolean updateSupplier(SupplierRequest supplierRequest);
 
@@ -18,5 +17,7 @@ public interface SupplierService {
     SupplierRequest getSupplierById(UUID id);
 
     Boolean deleteSupplier(UUID id);
+
+    List<SupplierRequest> searchSuppliers(String keyword);
 
 }

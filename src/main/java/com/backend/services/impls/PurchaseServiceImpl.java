@@ -217,6 +217,13 @@ public class PurchaseServiceImpl implements PurchaseService {
         return paginationResponse.buildPaginatedResponse(purchasePage.stream().map(purchaseMapper::toDto).toList(), purchasePage);
     }
 
+    @Override
+    public PaginatedResponse<PurchaseRequest> getAllBySupplierId(UUID supplierId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Purchase> purchasePage = purchaseRepository.findBySupplierId(supplierId, pageable);
+        return paginationResponse.buildPaginatedResponse(purchasePage.stream().map(purchaseMapper::toDto).toList(),purchasePage);
+    }
+
     public String generateInvoiceNumber() {
 
         String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
