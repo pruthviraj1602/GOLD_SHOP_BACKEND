@@ -1,5 +1,7 @@
 package com.backend.modals.purchase;
 
+import com.backend.modals.BaseAuditableEntity;
+import com.backend.modals.leadger.LedgerTransaction;
 import com.backend.modals.supplier.Supplier;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -20,7 +22,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public class Purchase {
+public class Purchase  extends BaseAuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -28,6 +30,7 @@ public class Purchase {
 
     private Date date;
 
+    @Column(unique = true)
     private String invoiceNumber;
 
     private BigDecimal subTotal;
@@ -48,4 +51,6 @@ public class Purchase {
     @OneToMany(mappedBy = "purchase", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PurchaseProducts> purchaseProducts;
 
+    @OneToOne(mappedBy = "purchase", cascade = CascadeType.ALL, orphanRemoval = true)
+    private LedgerTransaction ledgerTransactions;
 }

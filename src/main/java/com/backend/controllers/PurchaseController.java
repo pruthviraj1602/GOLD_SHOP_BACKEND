@@ -32,4 +32,10 @@ public class PurchaseController {
     public ResponseEntity<?> getPurchase(@RequestParam UUID id){
         return ResponseEntity.ok(purchaseService.getPurchaseById(id));
     }
+
+
+    @GetMapping("/get-all")
+    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
+        return ResponseEntity.ok(purchaseService.getAll(page, size));
+    }
 }

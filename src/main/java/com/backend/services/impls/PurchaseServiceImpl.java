@@ -22,9 +22,16 @@ import com.backend.repositories.supplier.SupplierRepository;
 import com.backend.services.PurchaseService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -39,11 +46,13 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final ProductMapper productMapper;
     private final LedgerRepository ledgerRepository;
     private final LedgerTransactionRepository ledgerTransactionRepository;
+    private final PaginationResponseImpl paginationResponse;
 
     @Transactional
     @Override
     public Boolean createPurchase(PurchaseRequest request) {
         Purchase purchase = purchaseMapper.toEntity(request);
+        purchase.setInvoiceNumber(generateInvoiceNumber());
         Supplier supplier = supplierRepository.findById(request.getSupplier().getId())
                 .orElseThrow(() -> new RuntimeException("Supplier not found"));
         purchase.setSupplier(supplier);
@@ -68,12 +77,12 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         Purchase savedPurchase = purchaseRepository.save(purchase);
 
-        createOrUpdateTransactions(request, savedPurchase);
+        createTransactions(request, savedPurchase);
 
         return true;
     }
 
-    public void createOrUpdateTransactions(PurchaseRequest request, Purchase purchase) {
+    public void createTransactions(PurchaseRequest request, Purchase purchase) {
         // Create or update ledger for the supplier
         Supplier supplier = purchase.getSupplier();
         Ledger ledger = ledgerRepository.findBySupplier(supplier)
@@ -106,6 +115,7 @@ public class PurchaseServiceImpl implements PurchaseService {
             transaction.setDebitAmount(request.getPaidAmount());
             transaction.setCreditAmount(BigDecimal.ZERO);
             transaction.setBalanceAfterTransaction(ledger.getTotalAmount());
+            transaction.setPurchase(purchase);
             transaction.setRemarks("Purchase payment for invoice: " + purchase.getInvoiceNumber());
             ledgerTransactionRepository.save(transaction);
         }
@@ -117,6 +127,21 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         Purchase purchase = purchaseRepository.findById(request.getId())
                 .orElseThrow(() -> new RuntimeException("Purchase not found"));
+
+        if (purchase.getSupplier().getLedger() != null) {
+            Ledger ledger = purchase.getSupplier().getLedger();
+
+            // Reverse the previous ledger amounts
+            ledger.setTotalAmount(ledger.getTotalAmount().subtract(purchase.getTotal()));
+            ledger.setDebitAmount(ledger.getDebitAmount().subtract(purchase.getPaidAmount()));
+            ledger.setRemainingBalance(ledger.getRemainingBalance().subtract(purchase.getDueAmount()));
+            ledgerRepository.save(ledger);
+
+            // Remove the previous transaction related to this purchase
+            if (purchase.getLedgerTransactions() != null)
+                ledgerTransactionRepository.delete(purchase.getLedgerTransactions());
+
+        }
 
         // Reverse stock
         for (PurchaseProducts oldPurchaseProduct : purchase.getPurchaseProducts()) {
@@ -169,6 +194,7 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         purchaseRepository.save(purchase);
 
+        createTransactions(request, purchase);
         return true;
     }
 
@@ -186,6 +212,27 @@ public class PurchaseServiceImpl implements PurchaseService {
 
     @Override
     public PaginatedResponse<PurchaseRequest> getAll(int page, int size) {
-        return null;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Purchase> purchasePage = purchaseRepository.findAll(pageable);
+        return paginationResponse.buildPaginatedResponse(purchasePage.stream().map(purchaseMapper::toDto).toList(), purchasePage);
+    }
+
+    public String generateInvoiceNumber() {
+
+        String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String prefix = "INV-" + date + "-";
+
+        Optional<Purchase> lastInvoice = purchaseRepository
+                .findTopByInvoiceNumberStartingWithOrderByInvoiceNumberDesc(prefix);
+
+        int nextSequence = 1;
+
+        if (lastInvoice.isPresent()) {
+            String lastInvoiceNumber = lastInvoice.get().getInvoiceNumber();
+
+            nextSequence = Integer.parseInt(lastInvoiceNumber.substring(prefix.length())) + 1;
+        }
+
+        return prefix + nextSequence;
     }
 }
