@@ -102,7 +102,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         // Update ledger amounts
         ledger.setTotalAmount(ledger.getTotalAmount().add(request.getTotal()));
         ledger.setDebitAmount(ledger.getDebitAmount().add(request.getPaidAmount()));
-        ledger.setRemainingBalance(ledger.getRemainingBalance().add(request.getDueAmount()));
+        ledger.setRemainingBalance(request.getDueAmount());
         ledgerRepository.save(ledger);
 
         if (request.getPaidAmount().compareTo(BigDecimal.ZERO) > 0) {
