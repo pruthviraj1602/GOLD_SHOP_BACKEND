@@ -23,6 +23,8 @@ public class PurchaseProductRequest {
 
     private String gstSlab;
 
+    private String paymentMode;
+
     private Integer purchaseQuantity;
 
     private BigDecimal sellingPrice;

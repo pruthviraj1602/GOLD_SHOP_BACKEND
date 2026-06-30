@@ -43,6 +43,8 @@ public class Purchase  extends BaseAuditableEntity {
 
     private BigDecimal dueAmount;
 
+    private String paymentMode;
+
 
     @ManyToOne
     @JoinColumn(name = "supplier_id")
